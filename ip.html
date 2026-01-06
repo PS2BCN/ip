@@ -1,181 +1,104 @@
-import tkinter as tk
-from tkinter import ttk, messagebox
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultor Fiscal Patrimonio 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .active-tab { border-bottom: 3px solid #0f172a; color: #0f172a; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans">
 
-class CalculadoraElite:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Consultor Fiscal de Patrimonio 2026")
-        self.root.minsize(750, 700)
-        self.root.geometry("850x800")
-        self.root.configure(bg="#f1f5f9")
+    <div class="max-w-5xl mx-auto py-10 px-4">
+        <header class="bg-slate-900 text-white p-6 rounded-t-xl shadow-lg">
+            <h1 class="text-2xl font-bold">Consultor Fiscal de Patrimonio 2026</h1>
+            <p class="text-slate-400 text-sm">Motor de Liquidación Comparativa Interterritorial</p>
+        </header>
 
-        ## CONFIGURACIÓN FISCAL POR CCAA
-        self.ccaa_config = {
-            "Cataluña": (500000, "catalana", 1.0),
-            "Madrid": (700000, "estatal", 0.0),
-            "Andalucía": (700000, "estatal", 0.0),
-            "C. Valenciana": (500000, "estatal", 1.0),
-            "Aragón": (400000, "estatal", 1.0),
-            "Resto España": (700000, "estatal", 1.0)
-        }
+        <div class="bg-white border-b flex overflow-x-auto">
+            <button onclick="showTab('simulador')" id="tab-btn-simulador" class="px-6 py-4 text-slate-500 hover:bg-slate-50 active-tab whitespace-nowrap">Simulador de Cálculo</button>
+            <button onclick="showTab('tablas')" id="tab-btn-tablas" class="px-6 py-4 text-slate-500 hover:bg-slate-50 whitespace-nowrap">Tablas y Porcentajes</button>
+        </div>
 
-        self.escalas = {
-            "estatal": [
-                (167129, 0.002), (334252, 0.003), (668499, 0.005), (1336999, 0.009), 
-                (2673999, 0.013), (5347998, 0.017), (10695996, 0.021), (float('inf'), 0.035)
-            ],
-            "catalana": [
-                (167129, 0.0021), (334252, 0.00315), (668499, 0.00525), (1336999, 0.00945), 
-                (2673999, 0.01365), (5347998, 0.01785), (10695996, 0.0236), (float('inf'), 0.0275)
-            ]
-        }
-
-        self.setup_ui()
-
-    def setup_ui(self):
-        # Crear control de pestañas
-        self.tab_control = ttk.Notebook(self.root)
-        
-        self.tab_simulador = ttk.Frame(self.tab_control)
-        self.tab_diccionario = ttk.Frame(self.tab_control)
-        
-        self.tab_control.add(self.tab_simulador, text=' Simulador de Cálculo ')
-        self.tab_control.add(self.tab_diccionario, text=' Tablas y Porcentajes ')
-        self.tab_control.pack(expand=1, fill="both")
-
-        self.setup_tab_simulador()
-        self.setup_tab_diccionario()
-
-    def setup_tab_simulador(self):
-        # Layout adaptable
-        self.tab_simulador.columnconfigure(0, weight=1)
-        self.tab_simulador.rowconfigure(1, weight=1)
-
-        # --- Zona Superior: Entradas ---
-        top_frame = tk.Frame(self.tab_simulador, bg="#f1f5f9", padx=20, pady=20)
-        top_frame.grid(row=0, column=0, sticky="ew")
-        top_frame.columnconfigure(1, weight=1)
-
-        tk.Label(top_frame, text="DATOS DEL CONTRIBUYENTE", font=("Arial", 12, "bold"), bg="#f1f5f9").grid(row=0, column=0, columnspan=2, pady=(0,15), sticky="w")
-
-        campos = [("Comunidad de Residencia:", "ccaa"), ("Vivienda Habitual (€):", "viv"), 
-                  ("Otros Bienes y Derechos (€):", "bien"), ("Deudas Deducibles (€):", "deu")]
-        
-        self.inputs = {}
-        for i, (txt, key) in enumerate(campos):
-            tk.Label(top_frame, text=txt, bg="#f1f5f9", font=("Arial", 10)).grid(row=i+1, column=0, sticky="w", pady=5)
-            if key == "ccaa":
-                self.combo = ttk.Combobox(top_frame, values=list(self.ccaa_config.keys()), state="readonly", font=("Arial", 10))
-                self.combo.set("Cataluña")
-                self.combo.grid(row=i+1, column=1, sticky="ew", padx=10)
-            else:
-                ent = tk.Entry(top_frame, font=("Arial", 11), bd=1)
-                ent.grid(row=i+1, column=1, sticky="ew", padx=10)
-                self.inputs[key] = ent
-
-        btn_calc = tk.Button(top_frame, text="GENERAR LIQUIDACIÓN COMPARATIVA", bg="#0f172a", fg="white", 
-                             font=("Arial", 11, "bold"), command=self.ejecutar, pady=8, cursor="hand2")
-        btn_calc.grid(row=5, column=0, columnspan=2, sticky="ew", pady=(15,0))
-
-        # --- Zona Inferior: Resultados ---
-        res_frame = tk.Frame(self.tab_simulador, bg="white", padx=20, pady=20)
-        res_frame.grid(row=1, column=0, sticky="nsew")
-        res_frame.columnconfigure(0, weight=1)
-        res_frame.rowconfigure(0, weight=1)
-
-        self.txt_res = tk.Text(res_frame, font=("Consolas", 10), bd=0, bg="white")
-        self.txt_res.grid(row=0, column=0, sticky="nsew")
-        
-        scroll = ttk.Scrollbar(res_frame, orient="vertical", command=self.txt_res.yview)
-        scroll.grid(row=0, column=1, sticky="ns")
-        self.txt_res.configure(yscrollcommand=scroll.set)
-
-    def setup_tab_diccionario(self):
-        # Mostrar las tablas de porcentajes para que el usuario las entienda
-        self.tab_diccionario.columnconfigure(0, weight=1)
-        txt_dic = tk.Text(self.tab_diccionario, font=("Consolas", 10), padx=20, pady=20, bg="#f8fafc")
-        txt_dic.pack(expand=1, fill="both")
-        
-        info = "NORMATIVA Y ESCALAS APLICADAS (SIMULACIÓN 2026)\n"
-        info += "="*60 + "\n\n"
-        
-        for nombre, escala in self.escalas.items():
-            info += f"TABLA TIPO {nombre.upper()}:\n"
-            info += f"{'Desde Base (€)':<18} | {'Tipo (%)':<10}\n"
-            info += "-"*35 + "\n"
-            prev = 0
-            for limite, tasa in escala:
-                info += f"{prev:>18,.0f} € | {tasa*100:>8.2f} %\n".replace(",", ".")
-                prev = limite
-            info += "\n"
-
-        info += "RESUMEN DE MÍNIMOS Y BONIFICACIONES:\n"
-        info += "-"*60 + "\n"
-        for ccaa, (min_ex, esc, bonif) in self.ccaa_config.items():
-            b_txt = "100% (No paga)" if bonif == 0 else f"{int(bonif*100)}% (Paga)"
-            info += f"• {ccaa:<15}: Mínimo {min_ex:,.0f}€ | Escala {esc.capitalize()} | Carga: {b_txt}\n".replace(",", ".")
-
-        txt_dic.insert("1.0", info)
-        txt_dic.config(state="disabled")
-
-    def calcular_cuota_progresiva(self, base_liq, tipo_escala):
-        if base_liq <= 0: return 0
-        cuota, restante, anterior_limite = 0, base_liq, 0
-        for limite, porcentaje in self.escalas[tipo_escala]:
-            tramo = min(restante, limite - anterior_limite)
-            cuota += tramo * porcentaje
-            restante -= tramo
-            anterior_limite = limite
-            if restante <= 0: break
-        return cuota
-
-    def ejecutar(self):
-        try:
-            v = float(self.inputs['viv'].get() or 0)
-            b = float(self.inputs['bien'].get() or 0)
-            d = float(self.inputs['deu'].get() or 0)
-            ccaa_sel = self.combo.get()
-
-            # Cálculo de Patrimonio Neto (Exención vivienda 300k)
-            p_neto = max(0, (v - min(v, 300000)) + b - d)
+        <main class="bg-white p-6 rounded-b-xl shadow-lg">
             
-            def f(n): return "{:,.2f} €".format(n).replace(",", "X").replace(".", ",").replace("X", ".")
-            def p(n): return "{:.3f} %".format(n*100).replace(".", ",")
+            <div id="simulador" class="tab-content active">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                        <h2 class="text-sm font-bold text-slate-500 mb-6 uppercase tracking-wider">Datos del Contribuyente</h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Comunidad de Residencia</label>
+                                <select id="ccaa" class="w-full border p-2 rounded bg-white shadow-sm focus:ring-2 focus:ring-slate-400 outline-none">
+                                    <option value="Cataluña">Cataluña</option>
+                                    <option value="Madrid">Madrid</option>
+                                    <option value="Andalucía">Andalucía</option>
+                                    <option value="C. Valenciana">C. Valenciana</option>
+                                    <option value="Aragón">Aragón</option>
+                                    <option value="Resto España">Resto España</option>
+                                </select>
+                            </div>
 
-            # Cuota CCAA Seleccionada
-            min_ex, esc, bonif = self.ccaa_config[ccaa_sel]
-            base_l = max(0, p_neto - min_ex)
-            cuota_sel = self.calcular_cuota_progresiva(base_l, esc) * bonif
-            efectivo_sel = cuota_sel / p_neto if p_neto > 0 else 0
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Vivienda Habitual (€)</label>
+                                <input type="number" id="viv" placeholder="0" class="w-full border p-2 rounded shadow-sm">
+                            </div>
 
-            reporte = f"INFORME DETALLADO DE LIQUIDACIÓN - {ccaa_sel.upper()}\n"
-            reporte += "="*75 + "\n"
-            reporte += f"Patrimonio Neto Fiscal: {f(p_neto)}\n"
-            reporte += f"Mínimo Exento CCAA:    {f(min_ex)}\n"
-            reporte += f"Base Liquidable:        {f(base_l)}\n"
-            reporte += f"Cuota Resultante:       {f(cuota_sel)}\n"
-            reporte += f"TIPO EFECTIVO REAL:     {p(efectivo_sel)} (Sobre Patrimonio Neto)\n"
-            reporte += "="*75 + "\n\n"
-            
-            reporte += f"{'COMUNIDAD':<18} | {'CUOTA':>14} | {'TIPO EFECT.':>12} | {'AHORRO':>12}\n"
-            reporte += "-"*75 + "\n"
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Otros Bienes y Derechos (€)</label>
+                                <input type="number" id="bien" placeholder="0" class="w-full border p-2 rounded shadow-sm">
+                            </div>
 
-            for ccaa, (m_ex, escala_tipo, b_mult) in self.ccaa_config.items():
-                c = self.calcular_cuota_progresiva(max(0, p_neto - m_ex), escala_tipo) * b_mult
-                t_efect = c / p_neto if p_neto > 0 else 0
-                ahorro = cuota_sel - c
-                reporte += f"{ccaa[:17]:<18} | {f(c):>14} | {p(t_efect):>12} | {f(max(0, ahorro)):>12}\n"
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Deudas Deducibles (€)</label>
+                                <input type="number" id="deu" placeholder="0" class="w-full border p-2 rounded shadow-sm">
+                            </div>
 
-            self.txt_res.delete("1.0", tk.END)
-            self.txt_res.insert(tk.END, reporte)
-        except ValueError:
-            messagebox.showerror("Error", "Error en los datos. Introduce solo números (usa punto para decimales si es necesario).")
+                            <button onclick="ejecutar()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition-all shadow-md mt-4">
+                                GENERAR LIQUIDACIÓN
+                            </button>
+                        </div>
+                    </div>
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    # Estilo para las pestañas
-    style = ttk.Style()
-    style.configure("TNotebook.Tab", font=("Arial", 10), padding=[10, 5])
-    
-    app = CalculadoraElite(root)
-    root.mainloop()
+                    <div class="flex flex-col">
+                        <h2 class="text-sm font-bold text-slate-500 mb-2 uppercase tracking-wider text-right">Informe Resultante</h2>
+                        <div class="bg-slate-900 rounded-lg p-6 shadow-inner flex-grow overflow-auto">
+                            <pre id="txt_res" class="text-xs font-mono text-green-400 whitespace-pre">Esperando datos para procesar...</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tablas" class="tab-content">
+                <div class="overflow-x-auto">
+                    <pre id="info-tablas" class="text-xs font-mono text-slate-700 bg-slate-50 p-6 rounded border"></pre>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // CONFIGURACIÓN FISCAL 2026
+        const ccaa_config = {
+            "Cataluña": [500000, "catalana", 1.0],
+            "Madrid": [700000, "estatal", 0.0],
+            "Andalucía": [700000, "estatal", 0.0],
+            "C. Valenciana": [500000, "estatal", 1.0],
+            "Aragón": [400000, "estatal", 1.0],
+            "Resto España": [700000, "estatal", 1.0]
+        };
+
+        const escalas = {
+            "estatal": [[167129, 0.002], [334252, 0.003], [668499, 0.005], [1336999, 0.009], [2673999, 0.013], [5347998, 0.017], [10695996, 0.021], [Infinity, 0.035]],
+            "catalana": [[167129, 0.0021], [334252, 0.00315], [668499, 0.00525], [1336999, 0.00945], [2673999, 0.01365], [5347998, 0.01785], [10695996, 0.0236], [Infinity, 0.0275]]
+        };
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('button[id^="tab-btn-"]').forEach(b => b.classList.remove('active
