@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultor Fiscal Patrimonio 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .active-tab { border-bottom: 3px solid #0f172a; color: #0f172a; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans">
+
+    <div class="max-w-5xl mx-auto py-10 px-4">
+        <header class="bg-slate-900 text-white p-6 rounded-t-xl shadow-lg flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">Consultor Fiscal de Patrimonio 2026</h1>
+                <p class="text-slate-400 text-sm">Simulador de Liquidación Comparativa por CCAA</p>
+            </div>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/Escudo_de_Barcelona.svg" alt="BCN" class="h-12 opacity-50">
+        </header>
+
+        <div class="bg-white border-b flex">
+            <button onclick="showTab('simulador')" id="tab-btn-simulador" class="px-6 py-3 text-slate-500 hover:bg-slate-50 active-tab">Simulador de Cálculo</button>
+            <button onclick="showTab('tablas')" id="tab-btn-tablas" class="px-6 py-3 text-slate-500 hover:bg-slate-50">Normativa Aplicada</button>
+        </div>
+
+        <main class="bg-white p-6 rounded-b-xl shadow-lg">
+            <div id="simulador" class="tab-content active">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="space-y-4">
+                        <h2 class="text-lg font-bold text-slate-700 mb-4 border-l-4 border-blue-500 pl-2">DATOS DE ENTRADA</h2>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600">Comunidad de Residencia</label>
+                            <select id="ccaa" class="w-full mt-1 border p-2 rounded bg-slate-50 focus:ring-2 focus:ring-blue-500">
+                                <option value="Cataluña">Cataluña</option>
+                                <option value="Madrid">Madrid</option>
+                                <option value="Andalucía">Andalucía</option>
+                                <option value="C. Valenciana">C. Valenciana</option>
+                                <option value="Aragón">Aragón</option>
+                                <option value="Resto España">Resto España</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600">Vivienda Habitual (€)</label>
+                            <input type="number" id="viv" value="0" class="w-full mt-1 border p-2 rounded">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600">Otros Bienes / Inversiones (€)</label>
+                            <input type="number" id="bien" value="0" class="w-full mt-1 border p-2 rounded">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600">Deudas / Cargas (€)</label>
+                            <input type="number" id="deu" value="0" class="w-full mt-1 border p-2 rounded">
+                        </div>
+
+                        <button onclick="ejecutar()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition shadow-md">
+                            CALCULAR LIQUIDACIÓN
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <div id="pdf-area" class="bg-slate-50 p-6 border rounded-lg flex-grow">
+                            <h2 class="text-xs font-bold text-slate-400 mb-4 uppercase tracking-widest">Borrador de Liquidación</h2>
+                            <pre id="txt_res" class="text-[11px] font-mono text-slate-800 whitespace-pre-wrap leading-relaxed">Complete los datos para generar el informe...</pre>
+                        </div>
+                        <button onclick="descargarPDF()" id="btn-pdf" class="hidden mt-4 bg-red-700 text-white font-bold py-2 rounded hover:bg-red-800 transition flex items-center justify-center gap-2">
+                            <span>📄</span> DESCARGAR INFORME EN PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tablas" class="tab-content">
+                <div id="info-tablas" class="font-mono text-xs text-slate-600 bg-slate-50 p-6 rounded border leading-loose"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const ccaa_config = {
+            "Cataluña": [500000, "catalana", 1.0],
+            "Madrid": [700000, "estatal", 0.0],
+            "Andalucía": [700000, "estatal", 0.0],
+            "C. Valenciana": [500000, "estatal", 1.0],
+            "Aragón": [400000, "estatal", 1.0],
+            "Resto España": [700000, "estatal", 1.0]
+        };
